@@ -40,4 +40,7 @@ VALUES
 (8311, "Nancy", "Cobb", 82, 8632),
 (8949, "Seth", "Long", 82, 8632);
 
-SELECT * FROM employee
+-- get all employee data 
+SELECT employee.*, role.title, role.salary, role.department_id, department.name FROM employee 
+JOIN role ON employee.role_id = role.id
+JOIN department ON role.department_id = department.id
