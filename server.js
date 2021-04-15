@@ -2,8 +2,11 @@
 const mysql = require('mysql');
 const inquirer = require('inquirer');
 const express = require('express');
-const { QueryTypes } = require('sequelize');
+const { DataTypes } = require('sequelize');
 const sequelize = require('./config/connection');
+const Role = require('./models/Role');
+const Department = require('./models/Department');
+
 
 // add middleware
 const app = express();
@@ -13,8 +16,6 @@ const PORT = process.env.PORT || 5001;
 sequelize.sync({ force: false }).then(() => {
     app.listen(PORT, () => {console.log('Welcome to the Employee Tracker!'); startApp();});
 });
-
-
 
 // initialize app
 const startApp = () => {
@@ -62,17 +63,70 @@ const addData = () => {
     })
 }
 
-// add department by getting highest department ID and then asking user for department name
+// add department by getting highest department ID and asking user for department name
 async function addDepartment() {
-    const deptName = inquirer.prompt([
+    const getDept = await inquirer.prompt([
         {
             type: 'input',
             message: 'What is the department\'s name?',
             name: 'deptName'
         }
-    ])
+    ]);
+    // const dept = await getDept.deptName;
     const query = "SELECT MAX(id) from department";
     const maxID = await sequelize.query(query, { plain: true });
     const newID = Object.values(maxID)[0] + 1;
-    console.log(newID);
+
+    Department.create({
+        id: newID,
+        name: `${getDept.deptName}`
+    })
+    .catch(function(err) {
+        // print the error details
+        console.log(err);
+    });
+}
+
+async function addRole() {
+    // get list of departments
+    const departments = await Department.findAll({
+        attributes: ["name"]
+    });
+    const deptNames = [];
+    for(department of departments) {
+        deptNames.push(department.dataValues.name)
+    };
+    // console.log(deptNames);
+    const getRole = await inquirer.prompt([
+        {
+            type: 'input',
+            message: 'What is the new role\'s ID?',
+            name: 'roleID'
+        },
+        {
+            type: 'input',
+            message: 'What is the role title?',
+            name: 'roleTitle'
+        },
+        {
+            type: 'input',
+            message: 'What is the salary for this role?',
+            name: 'roleSalary'
+        },
+        {
+            type: 'list',
+            message: 'Which department does this role belong to?',
+            choices: deptNames,
+            name: 'roleDept'
+        }
+    ]);
+    // get dept ID
+    const deptChosen = await Department.findOne({ where: { name: getRole.roleDept } });
+    const deptID = deptChosen.dataValues.id;
+
+    try {
+        const role = await Role.create({ id: getRole.roleID, title: getRole.roleTitle, salary: getRole.roleSalary, departmentId: deptID })
+    } catch (err) {
+        console.log(err);
+    }
 }
