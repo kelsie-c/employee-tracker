@@ -43,4 +43,7 @@ VALUES
 -- get all employee data 
 SELECT employee.*, role.title, role.salary, role.department_id, department.name FROM employee 
 JOIN role ON employee.role_id = role.id
-JOIN department ON role.department_id = department.id
+JOIN department ON role.department_id = department.id;
+
+-- get max id from department
+SELECT MAX(id) from department
