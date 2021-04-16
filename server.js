@@ -93,11 +93,13 @@ async function addRole() {
     const departments = await Department.findAll({
         attributes: ["name"]
     });
+    // create array of department names
     const deptNames = [];
     for(department of departments) {
         deptNames.push(department.dataValues.name)
     };
-    // console.log(deptNames);
+
+    // prompt user for role info
     const getRole = await inquirer.prompt([
         {
             type: 'input',
@@ -125,6 +127,8 @@ async function addRole() {
     const deptChosen = await Department.findOne({ where: { name: getRole.roleDept } });
     const deptID = deptChosen.dataValues.id;
 
+    // send to database
+    // equivalent of 'INSERT INTO role (id, title, salary, department_id) VALUES(?,?,?,?)'
     try {
         const role = await Role.create({ id: getRole.roleID, title: getRole.roleTitle, salary: getRole.roleSalary, departmentId: deptID })
     } catch (err) {
@@ -137,11 +141,13 @@ async function addEmployee() {
     const departments = await Department.findAll({
         attributes: ["name"]
     });
+    // create array of dept names
     const deptNames = [];
     for(department of departments) {
         deptNames.push(department.dataValues.name)
     };
-    // console.log(deptNames);
+    
+    // prompt user for employee info
     const getEmployee = await inquirer.prompt([
         {
             type: 'input',
@@ -165,8 +171,14 @@ async function addEmployee() {
             name: 'eDept'
         }        
     ]);
+
+    // identify selected department
+    // equivalent of 'SELECT id FROM department WHERE name = ?'
     const deptChosen = await Department.findOne({ where: { name: getEmployee.eDept } });
     const deptID = deptChosen.dataValues.id;
+
+    // create array of roles within the selected department
+    // equivalent of 'SELECT id FROM role WHERE department_id = ?
     const chooseRole = await Role.findAll({ where: {departmentId: deptID }});
     console.log(chooseRole);
     const roles = [];
@@ -175,6 +187,7 @@ async function addEmployee() {
     }
     console.log(roles);
 
+    // prompt user for employee role
     const getEmpRole = await inquirer.prompt([
         {
             type: 'list',
@@ -183,9 +196,13 @@ async function addEmployee() {
             name: 'chosenRole'
         }
     ]);
+
+    // get ID for selected role
+    // equivalent of 'SELECT id FROM role WHERE title = ?'
     const chosenRole = await Role.findOne({ where: { title: getEmpRole.chosenRole }});
     const roleID = chosenRole.dataValues.id;
 
+    // get names of all employees in selected department
     const query = `SELECT first_name, last_name FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id WHERE department.name = '${getEmployee.eDept}'`;
     const mgrNames = await sequelize.query(query);
     const allMgrs = [];
@@ -194,6 +211,7 @@ async function addEmployee() {
     }
     console.log(allMgrs);
 
+    // prompt user to select a manager
     const getManager = await inquirer.prompt([
         {
             type: 'list',
@@ -202,11 +220,14 @@ async function addEmployee() {
             name: 'eManager'
         }
     ])
+
+    // get manager's ID
     const manager = getManager.eManager.split(" ");
     const query2 = `SELECT id FROM employee WHERE first_name = '${manager[0]}' and last_name = '${manager[1]}'`;
 
     const mgrID = await sequelize.query(query2, { plain: true });
    
+    // send to database
     try {
         const employee = await Employee.create({ id: getEmployee.eID, firstName: getEmployee.eFirst, lastName: getEmployee.eLast, roleId: roleID, managerId: mgrID.id });
         console.log(employee);
