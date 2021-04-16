@@ -53,4 +53,10 @@ SELECT * from employee WHERE id = 5444;
 SELECT first_name, last_name FROM employee 
 JOIN role ON employee.role_id = role.id
 JOIN department ON role.department_id = department.id
-WHERE department.name = 'Marketing'
+WHERE department.name = 'Marketing';
+
+UPDATE department
+SET id = 11
+WHERE department.name = 'Sales';
+
+SELECT * FROM department
