@@ -48,4 +48,9 @@ JOIN department ON role.department_id = department.id;
 -- get max id from department
 SELECT MAX(id) from department;
 
-SELECT * from role
+SELECT * from employee WHERE id = 5444;
+
+SELECT first_name, last_name FROM employee 
+JOIN role ON employee.role_id = role.id
+JOIN department ON role.department_id = department.id
+WHERE department.name = 'Marketing'
