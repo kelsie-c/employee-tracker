@@ -347,6 +347,17 @@ async function updateDepartment() {
     }
 
     try {
+        Role.update({
+            departmentId: id
+        },
+        {
+            where: { departmentId: deptID }
+        })
+    } catch {
+        console.log(err);
+    }
+
+    try {
         Department.update({
             id: id,
             name: dept
@@ -449,11 +460,14 @@ async function updateRole() {
             when: (answers) => answers.updateDept === true
         }
     ])
+    const query2 = `SELECT id FROM department WHERE name = '${updRole.newDept}'`;
+    const getNewRoleID = await sequelize.query(query2, { plain: true });
+    const newDeptID = getNewRoleID.id;
 
     let id = roleID;
     let title = roleTitle;
     let salary = roleSalary;
-    let dept = roleDept;
+    let dept = roleDept; // ------------------------------------------------------------------------FIX
 
     if(updRole.updateID) {
         id = updRole.newID;
@@ -465,15 +479,27 @@ async function updateRole() {
         salary = updRole.newSalary;
     }
     if(updRole.updateDept) {
-        dept = updRole.newDept;
+        dept = newDeptID;
     }
+
+    try {
+        Employee.update({
+            roleId: id,
+        }, 
+        {
+            where: { roleId: roleID }
+        })
+    } catch(err) {
+        // print the error details
+        console.log(err);
+    };
 
     try {
         Role.update({
             id: id,
             title: title,
             salary: salary,
-            department_id: dept
+            departmentId: dept
         }, 
         {
             where: { title: roleTitle }
@@ -491,7 +517,7 @@ async function updateEmployee() {
     const roles = await Role.findAll({
         attributes: ["title"]
     });
-    // console.log(roles)
+
     // create array of dept names
     const roleNames = [];
     for(role of roles) {
@@ -528,16 +554,13 @@ async function updateEmployee() {
     ])
 
     const employeeName = selectEmployee.updateEmployee.split(" ");
-    const query2 = `SELECT * FROM employee WHERE first_name = '${employeeName[0]}' and last_name = '${employeeName[1]}'`;
+    const query2 = `SELECT id, first_name, last_name, role_id FROM employee WHERE first_name = '${employeeName[0]}' and last_name = '${employeeName[1]}'`;
     const getEInfo = await sequelize.query(query2, { plain: true });
     const employeeID = getEInfo.id;
     const employeeFirst = getEInfo.first_name;
     const employeeLast = getEInfo.last_name;
     const employeeRoleFull = selectRole.roleToUpdate;
     const employeeRoleID = getEInfo.role_id;
-    const employeeMgrID = getEInfo.manager_id;
-    const getMgrName = await sequelize.query(`SELECT CONCAT(first_name, " ", last_name) AS Manager_Name FROM employee WHERE id = ${employeeMgrID}`, { plain: true });
-    const mgrName = getMgrName.Manager_Name;
 
     const updateEInfo = await inquirer.prompt([
         {
@@ -579,7 +602,6 @@ async function updateEmployee() {
     const query = `SELECT department_id FROM role WHERE role.title = '${updateEInfo.newRole}'`;
     const departmentInfo = await sequelize.query(query, { plain: true });
     const departmentID = departmentInfo.department_id;
-    console.log(departmentID);
 
     const query6 = `SELECT CONCAT(first_name, " ", last_name) AS Managers FROM employee JOIN role ON employee.role_id = role.id WHERE role.department_id = ${departmentID}`;
     const managersInfo = await sequelize.query(query6, { raw: true });
@@ -587,12 +609,12 @@ async function updateEmployee() {
     for(manager of managersInfo[0]) {
         chooseMgr.push(manager.Managers);
     }
-    choosMgr.push('None');
+    chooseMgr.push('None');
 
     const selectMgr = await inquirer.prompt([
         {
             type: 'confirm',
-            message: `Would you like to update this employee\'s manager from ${mgrName}?`,
+            message: `Would you like to update this employee\'s manager?`,
             name: 'updateMgr'
         },
         {
@@ -604,5 +626,54 @@ async function updateEmployee() {
         }
     ])
 
-    
+    let newMgrID;
+
+    if (selectMgr.newMgr === 'None') {
+        newMgrID = null;
+    } else {
+        const newManagerName = selectMgr.newMgr.split(" ");
+        const query7 = `SELECT id FROM employee WHERE first_name = '${newManagerName[0]}' and last_name = '${newManagerName[1]}'`;
+        const getMInfo = await sequelize.query(query7, { plain: true });
+        newMgrID = getMInfo.id;
+    }
+
+    const query8 = `SELECT id FROM role WHERE title = '${updateEInfo.newRole}'`;
+    const getRInfo = await sequelize.query(query8, { plain: true });
+    const newRoleID = getRInfo.id;
+
+    let firstName = employeeFirst;
+    let lastName = employeeLast;
+    let roleId = employeeRoleID;    
+
+    if(updateEInfo.updateFirst) {
+        firstName = updateEInfo.newFirst;
+    }
+    if(updateEInfo.updateLast) {
+        lastName = updateEInfo.newLast;
+    }
+    if(updateEInfo.updateRole) {
+        roleId = newRoleID;
+    }
+    if(updateEInfo.updateMgr) {
+        if(selectMgr.newMgr === 'None') {
+            newMgrID = null;
+        }
+    }
+
+    try {
+        Employee.update({
+            firstName: firstName,
+            lastName: lastName,
+            roleId: roleId,
+            managerId: newMgrID
+        }, 
+        {
+            where: { id: employeeID }
+        })
+        console.log('Successfully updated employee!');
+        startApp();
+    } catch(err) {
+        // print the error details
+        console.log(err);
+    };
 }
