@@ -39,24 +39,3 @@ VALUES
 (8632, "Bradley", "McLaughlin", 81, NULL),
 (8311, "Nancy", "Cobb", 82, 8632),
 (8949, "Seth", "Long", 82, 8632);
-
--- get all employee data 
-SELECT employee.*, role.title, role.salary, role.department_id, department.name FROM employee 
-JOIN role ON employee.role_id = role.id
-JOIN department ON role.department_id = department.id;
-
--- get max id from department
-SELECT MAX(id) from department;
-
-SELECT * from employee WHERE id = 5444;
-
-SELECT first_name, last_name FROM employee 
-JOIN role ON employee.role_id = role.id
-JOIN department ON role.department_id = department.id
-WHERE department.name = 'Marketing';
-
-UPDATE department
-SET id = 11
-WHERE department.name = 'Sales';
-
-SELECT * FROM department
