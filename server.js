@@ -677,3 +677,76 @@ async function updateEmployee() {
         console.log(err);
     };
 }
+
+// -----------------------------------------------------------------------------------
+// VIEW DATA
+// -----------------------------------------------------------------------------------
+const viewData = () => {
+    inquirer.prompt([
+        {
+            type: 'list',
+            message: 'What would you like to view?',
+            choices: ['Departments', 'Roles', 'Employees', 'Go Back'],
+            name: 'addToTable'
+        }
+    ])
+    .then(({addToTable}) => {
+        if(addToTable === 'Departments') {
+            viewDepartment();
+        } else if(addToTable === 'Roles') {
+            viewRole();
+        } else if(addToTable === 'Employees') {
+            viewEmployee();
+        } else {
+            startApp();
+        }
+    })
+}
+
+async function viewDepartment() {
+    try {
+        const departments = await Department.findAll();
+        const deptList = [];
+        for(department of departments) {
+            deptList.push({ID: Number(department.dataValues.id), Department: department.dataValues.name})
+        };
+        // console.log(departments);
+        console.table(deptList);
+        startApp();
+    } catch(err) {
+        // print the error details
+        console.log(err);
+    };
+}
+
+async function viewRole() {
+    try {
+        const roles = await Role.findAll();
+        const roleList = [];
+        for(role of roles) {
+            roleList.push({ID: Number(role.dataValues.id), Title: role.dataValues.title, Salary: "$" + Number(role.dataValues.salary), Department: role.dataValues.departmentId})
+        };
+
+        console.table(roleList);
+        startApp();
+    } catch(err) {
+        // print the error details
+        console.log(err);
+    };
+}
+
+async function viewEmployee() {
+    try {
+        const employees = await Employee.findAll();
+        const employeeList = [];
+        for(employee of employees) {
+            employeeList.push({ID: Number(employee.dataValues.id), Name: employee.dataValues.firstName + " " + employee.dataValues.lastName, Role: Number(employee.dataValues.roleId), Manager: employee.dataValues.managerId})
+        };
+
+        console.table(employeeList);
+        startApp();
+    } catch(err) {
+        // print the error details
+        console.log(err);
+    };
+}
