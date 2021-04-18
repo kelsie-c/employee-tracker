@@ -710,7 +710,7 @@ async function viewDepartment() {
         for(department of departments) {
             deptList.push({ID: Number(department.dataValues.id), Department: department.dataValues.name})
         };
-        // console.log(departments);
+        
         console.table(deptList);
         startApp();
     } catch(err) {
@@ -721,10 +721,10 @@ async function viewDepartment() {
 
 async function viewRole() {
     try {
-        const roles = await Role.findAll();
+        const roles = await sequelize.query(`SELECT role.*, department.name FROM role JOIN department ON role.department_id = department.id`, { raw: true });
         const roleList = [];
-        for(role of roles) {
-            roleList.push({ID: Number(role.dataValues.id), Title: role.dataValues.title, Salary: "$" + Number(role.dataValues.salary), Department: role.dataValues.departmentId})
+        for(role of roles[0]) {
+            roleList.push({ID: role.id, Title: role.title, Salary: "$" + role.salary, Department: role.name})
         };
 
         console.table(roleList);
@@ -737,10 +737,17 @@ async function viewRole() {
 
 async function viewEmployee() {
     try {
-        const employees = await Employee.findAll();
+        let eManager;
+        const employees = await sequelize.query(`SELECT employee.*, role.title, role.salary, department.name FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id`, { raw: true });
         const employeeList = [];
-        for(employee of employees) {
-            employeeList.push({ID: Number(employee.dataValues.id), Name: employee.dataValues.firstName + " " + employee.dataValues.lastName, Role: Number(employee.dataValues.roleId), Manager: employee.dataValues.managerId})
+        // console.log(employees);
+        for(employee of employees[0]) {
+            if(employee.manager_id === null) {
+                eManager = '';
+            } else {
+                eManager = employee.manager_id;
+            }
+            employeeList.push({ID: employee.id, Name: employee.first_name + " " + employee.last_name, Role: employee.role_id, Manager: eManager, Title: employee.title, Salary: "$" + employee.salary, Department: employee.name})
         };
 
         console.table(employeeList);
