@@ -15,7 +15,29 @@ const PORT = process.env.PORT || 5001;
 
 // get user & password info and initialize app
 sequelize.sync({ force: false }).then(() => {
-    app.listen(PORT, () => {console.clear(); console.log('Welcome to the Employee Tracker!'); startApp();});
+    app.listen(PORT, () => {
+        console.clear(); 
+        console.log(`
+_____________________________________________________________
+|                                                           |
+|      _ _ _ _                 _                            |
+|     |  _ _ _|_ __ ___  _ __ | | ___  _   _  ___  ___      |
+|     |    _| | \'_ \` _ \\| \'_ \\| |/ _ \\| | | |/ _ \\/ _ \\     |
+|     |   |_ _| | | | | | |_) | | (_) | |_| |  __/  __/     |
+|     |_ _ _ _|_| |_| |_| \.__/|_|\\___/\\__,  |\\___|\\___|     |
+|                       |_|            |___/                |
+|      ___  ___                                             |
+|     |   \\/   | __ _ _ __   __ _  __ _  ___ _ __           |
+|     |  |\\/|  |/ _\` | \'_ \\ / _\` |/ _\` |/ _ \\ \'__|          |
+|     |  |  |  | (_| | | | | (_| | (_| |  __/ |             |
+|     |__|  |__|\\__,_|_| |_|\\__,_|\\__, |\\___|_|             |
+|                                  |___/                    |
+|                                                           |
+|___________________________________________________________|
+    `);
+        console.log('Welcome to the Employee Manager!'); 
+        startApp();
+    });
 });
 
 // initialize app
@@ -38,7 +60,7 @@ const startApp = () => {
         } else if(action === 'Update Data') {
             updateData();
         } else {
-            console.log('Thank you for using the Employee Tracker. Have a nice day!')
+            console.log('Thank you for using the Employee Manager. Have a nice day!')
             sequelize.close();
             process.exit(0);
             // return;
