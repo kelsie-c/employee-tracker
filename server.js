@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 5001;
 
 // get user & password info and initialize app
 sequelize.sync({ force: false }).then(() => {
-    app.listen(PORT, () => {console.log('Welcome to the Employee Tracker!'); startApp();});
+    app.listen(PORT, () => {console.clear(); console.log('Welcome to the Employee Tracker!'); startApp();});
 });
 
 // initialize app
