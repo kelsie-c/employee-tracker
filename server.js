@@ -303,22 +303,9 @@ async function updateDepartment() {
 
     const query2 = `SELECT * FROM department WHERE department.name = '${getDept.upDept}'`;
     const deptData = await sequelize.query(query2, { plain: true });
-    // console.log(deptData);
-    const deptID = deptData.id;
     const deptName = getDept.upDept;
 
     const updateDept = await inquirer.prompt([
-        {
-            type: 'confirm',
-            message: `Would you like to update this department\'s id from ${deptID}?`,
-            name: 'updateID'
-        },
-        {
-            type: 'input',
-            message: 'What is the department\'s new id?',
-            name: 'newID',
-            when: (answers) => answers.updateID === true
-        },
         {
             type: 'confirm',
             message: `Would you like to update this department\'s name from ${deptName}?`,
@@ -332,13 +319,7 @@ async function updateDepartment() {
         }
     ])
 
-    let id;
     let dept;
-    if(updateDept.updateID) {
-        id = updateDept.newID;
-    } else {
-        id = deptID;
-    }
 
     if(updateDept.updateName) {
         dept = updateDept.newName;
@@ -347,19 +328,7 @@ async function updateDepartment() {
     }
 
     try {
-        Role.update({
-            departmentId: id
-        },
-        {
-            where: { departmentId: deptID }
-        })
-    } catch {
-        console.log(err);
-    }
-
-    try {
         Department.update({
-            id: id,
             name: dept
         }, 
         {
@@ -406,25 +375,12 @@ async function updateRole() {
 
     const query = `SELECT * FROM role WHERE role.title = '${updateRoleInfo.chosenRole}'`;
     const roleData = await sequelize.query(query, { plain: true });
-    // console.log(deptData);
-    const roleID = roleData.id;
     const roleTitle = updateRoleInfo.chosenRole;
     const roleSalary = roleData.salary;
     const roleDept = roleData.departmentId;
 
     // prompt user for role info
     const updRole = await inquirer.prompt([
-        {
-            type: 'confirm',
-            message: 'Would you like to update the role\'s ID?',
-            name: 'updateID'
-        },
-        {
-            type: 'input',
-            message: 'What is the role\'s new ID?',
-            name: 'newID',
-            when: (answers) => answers.updateID === true
-        },
         {
             type: 'confirm',
             message: 'Would you like to update the role\'s title?',
@@ -460,18 +416,17 @@ async function updateRole() {
             when: (answers) => answers.updateDept === true
         }
     ])
-    const query2 = `SELECT id FROM department WHERE name = '${updRole.newDept}'`;
-    const getNewRoleID = await sequelize.query(query2, { plain: true });
-    const newDeptID = getNewRoleID.id;
 
-    let id = roleID;
+    if(updRole.updateDept) {
+        const query2 = `SELECT id FROM department WHERE name = '${updRole.newDept}'`;
+        const getNewRoleID = await sequelize.query(query2, { plain: true });
+        const newDeptID = getNewRoleID.id;
+    }
+
     let title = roleTitle;
     let salary = roleSalary;
     let dept = roleDept; // ------------------------------------------------------------------------FIX
 
-    if(updRole.updateID) {
-        id = updRole.newID;
-    }
     if(updRole.updateTitle) {
         title = updRole.newTitle;
     }
@@ -482,21 +437,10 @@ async function updateRole() {
         dept = newDeptID;
     }
 
-    try {
-        Employee.update({
-            roleId: id,
-        }, 
-        {
-            where: { roleId: roleID }
-        })
-    } catch(err) {
-        // print the error details
-        console.log(err);
-    };
+    console.log(salary);
 
     try {
         Role.update({
-            id: id,
             title: title,
             salary: salary,
             departmentId: dept
@@ -686,15 +630,19 @@ const viewData = () => {
         {
             type: 'list',
             message: 'What would you like to view?',
-            choices: ['Departments', 'Roles', 'Employees', 'Go Back'],
+            choices: ['Departments', 'Department Budgets', 'Roles', 'Managers', 'Employees', 'Go Back'],
             name: 'addToTable'
         }
     ])
     .then(({addToTable}) => {
         if(addToTable === 'Departments') {
             viewDepartment();
+        } else if (addToTable === 'Department Budgets'){
+            viewBudget();
         } else if(addToTable === 'Roles') {
             viewRole();
+        } else if(addToTable === 'Managers') {
+            viewManager();
         } else if(addToTable === 'Employees') {
             viewEmployee();
         } else {
@@ -710,8 +658,24 @@ async function viewDepartment() {
         for(department of departments) {
             deptList.push({ID: Number(department.dataValues.id), Department: department.dataValues.name})
         };
-        
+
         console.table(deptList);
+        startApp();
+    } catch(err) {
+        // print the error details
+        console.log(err);
+    };
+}
+
+async function viewBudget() {
+    try {
+        const deptBudget = await sequelize.query(`SELECT name, SUM(role.salary) AS total_salary FROM department JOIN role ON department.id = role.department_id JOIN employee ON role.id = employee.role_id GROUP BY name`, { raw: true });
+        const budgetList = [];
+        for(dept of deptBudget[0]) {
+            budgetList.push({Department: dept.name, Total_Budget: "$" + dept.total_salary})
+        };
+
+        console.table(budgetList);
         startApp();
     } catch(err) {
         // print the error details
@@ -728,6 +692,22 @@ async function viewRole() {
         };
 
         console.table(roleList);
+        startApp();
+    } catch(err) {
+        // print the error details
+        console.log(err);
+    };
+}
+
+async function viewManager() {
+    try {
+        const managers = await sequelize.query(`SELECT DISTINCT e2.id, CONCAT(e2.first_name, " ", e2.last_name) AS manager, department.name FROM employee AS e1 JOIN role ON e1.role_id = role.id JOIN department ON role.department_id = department.id JOIN employee AS e2 ON e2.id = e1.manager_id`, { raw: true });
+        const managerList = [];
+        for(manager of managers[0]) {
+            managerList.push({ID: manager.id, Name: manager.manager, Department: manager.name});
+        };
+
+        console.table(managerList);
         startApp();
     } catch(err) {
         // print the error details

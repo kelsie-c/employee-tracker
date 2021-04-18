@@ -39,3 +39,25 @@ VALUES
 (8632, "Bradley", "McLaughlin", 81, NULL),
 (8311, "Nancy", "Cobb", 82, 8632),
 (8949, "Seth", "Long", 82, 8632);
+
+SELECT CONCAT(first_name, " ", last_name) AS Managers FROM employee 
+JOIN role ON employee.role_id = role.id 
+WHERE role.department_id = 2;
+
+SELECT employee.*, role.title, role.salary, department.id, department.name FROM employee 
+JOIN role ON employee.role_id = role.id
+JOIN department ON role.department_id = department.id;
+
+
+UPDATE employee SET first_name = "Eileen", last_name = "Jensen", role_id = 52, manager_id = 5028 WHERE id = 5132;
+
+SELECT * FROM role
+JOIN employee ON role.id = employee.role_id;
+
+SELECT name, SUM(role.salary) FROM department
+JOIN role ON department.id = role.department_id
+JOIN employee ON role.id = employee.role_id
+GROUP BY name;
+
+SELECT CONCAT(first_name, " ", last_name) AS manager FROM employee
+WHERE manager_id = id;
